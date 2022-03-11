@@ -15,6 +15,8 @@ export default function MainTable() {
     fetchDataTable()
   }, [fetchDataTable])
 
+  const dateConverter = (date: string) => new Date(date).getTime()
+
   let { data, status, filteredInfo } = dataTable;
 
   const columns = useMemo(
@@ -46,7 +48,7 @@ export default function MainTable() {
         key: 'email',
         // filteredValue: filteredInfo?.email || null,
         // onFilter: (value, record) => record.email.includes(value),
-        // sorter: (a, b) => a.email.length - b.email.length,
+        sorter: (a, b) => a.email.length - b.email.length,
         // sortOrder: sortedInfo.columnKey === 'email' && sortedInfo.order,
         ellipsis: true,
       },
@@ -56,7 +58,7 @@ export default function MainTable() {
         key: 'gender',
         filteredValue: filteredInfo?.gender || null,
         onFilter: (value, record) => record.gender.toString().toLowerCase().startsWith(value),
-        sorter: (a, b) => a.gender - b.gender,
+        sorter: (a, b) => a.gender.length - b.gender.length,
         // sortOrder: sortedInfo.columnKey === 'gender' && sortedInfo.order,
         ellipsis: true,
       },
@@ -66,7 +68,7 @@ export default function MainTable() {
         key: 'registeredDate',
         // filteredValue: filteredInfo?.registeredDate || null,
         // onFilter: (value, record) => record.registeredDate.includes(value),
-        sorter: (a, b) => a.registeredDate.length - b.registeredDate.length,
+        sorter: (a, b) => dateConverter(a.registeredDate.toString()) - dateConverter(b.registeredDate.toString()),
         // sortOrder: sortedInfo.columnKey === 'registeredDate' && sortedInfo.order,
         ellipsis: true,
       },
