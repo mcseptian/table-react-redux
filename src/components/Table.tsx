@@ -1,4 +1,4 @@
-import { useMemo, useEffect } from 'react';
+import { useMemo, useEffect, useCallback } from 'react';
 import { Table } from 'antd'
 import { useAppSelector, useAppDispatch } from '../app/hooks';
 import { fetchAsync, selectTable } from '../features/table/tableSlice';
@@ -7,9 +7,13 @@ export default function MainTable() {
   const dataTable = useAppSelector(selectTable);
   const dispatch = useAppDispatch();
 
-  useEffect(() => {
+  const fetchDataTable = useCallback(() => {
     dispatch(fetchAsync(1))
-  }, [])
+  }, [dispatch])
+
+  useEffect(() => {
+    fetchDataTable()
+  }, [fetchDataTable])
 
   let { data, status, filteredInfo } = dataTable;
 
