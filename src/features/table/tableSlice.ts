@@ -37,14 +37,12 @@ const initialState: TableState = {
 export const fetchAsync = createAsyncThunk(
   'table/fetchData',
   async (page: number) => {
-    console.log('async trigger', baseURI)
     const response = await axios.get(baseURI, {
       params: {
         page: page,
         results: 10
       }
     });
-    console.log('async done', response)
     // The value we return becomes the `fulfilled` action payload
     const dataTable = response.data.results.map((val, _) => ({
       key: val.login.uuid,
@@ -54,7 +52,6 @@ export const fetchAsync = createAsyncThunk(
       gender: val.gender,
       registeredDate: val.registered.date.substring(0, 10) + ' ' + val.registered.date.substring(11, 16),
      }))
-     console.log('async return data', dataTable)
     return dataTable;
   }
 );
@@ -88,7 +85,6 @@ export const tableSlice = createSlice({
         username:  action.payload.username
       }
     }
-      console.log(action)
     },
   },
   // The `extraReducers` field lets the slice handle actions defined elsewhere,
