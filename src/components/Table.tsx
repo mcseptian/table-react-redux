@@ -1,23 +1,52 @@
 import { useMemo, useEffect, useCallback } from 'react';
 import { Table } from 'antd'
 import { useAppSelector, useAppDispatch } from '../app/hooks';
-import { fetchAsync, selectTable } from '../features/table/tableSlice';
+import { fetchAsync, sort, paginate, selectTable } from '../features/table/tableSlice';
+import { useSearchParams } from 'react-router-dom';
 
 export default function MainTable() {
   const dataTable = useAppSelector(selectTable);
   const dispatch = useAppDispatch();
+  const [searchParams] = useSearchParams();
 
   const fetchDataTable = useCallback(() => {
-    dispatch(fetchAsync(1))
-  }, [dispatch])
+    const result = searchParams.has('result') ? parseInt(searchParams.get('result')) : 10
+    dispatch(fetchAsync({ page: 1, result: result }))
+  }, [searchParams, dispatch])
+
+  const sortDataTable = useCallback(() => {
+    const sortBy = searchParams.has('sortBy') ? searchParams.get('sortBy') : false
+    const sortOrder = searchParams.has('sorOrder') ? searchParams.get('sorOrder') : false
+    dispatch(sort({
+      order: sortOrder,
+      columnKey: sortBy,
+    }))
+  }, [searchParams, dispatch])
+
+  const gotoPage = useCallback(() => {
+    const pageSize = searchParams.has('pageSize') ? searchParams.get('pageSize') : 5
+    const page = searchParams.has('page') ? parseInt(searchParams.get('page')) : 1
+    dispatch(paginate({ currentPage: page, pageSize: pageSize }))
+  }, [searchParams, dispatch])
+
 
   useEffect(() => {
     fetchDataTable()
-  }, [fetchDataTable])
+    sortDataTable()
+    gotoPage()
+  }, [fetchDataTable, sortDataTable, gotoPage])
 
   const dateConverter = (date: string) => new Date(date).getTime()
 
-  let { data, status, filteredInfo } = dataTable;
+  const { data, status, filteredInfo, sortedInfo, pagination } = dataTable;
+
+  const changeHandler = (pagination, sorter, extra) => {
+    extra.action === 'sort' && dispatch(sort({
+      order: sorter.order,
+      columnKey: sorter.columnKey
+    }))
+    extra.action === 'paginate' && dispatch(paginate({ currentPage: pagination.current, pageSize: pagination.pageSize }))
+  }
 
   const columns = useMemo(
     () => [
@@ -27,7 +56,7 @@ export default function MainTable() {
         key: 'username',
         filteredValue: filteredInfo?.username || null,
         onFilter: (value, record) => record.username.toString().toLowerCase().includes(value),
-        sorter: (a, b) => a.username.length - b.username.length,
+        // sorter: (a, b) => a.username.length - b.username.length,
         // sortOrder: sortedInfo.columnKey === 'username' && sortedInfo.order,
         ellipsis: true,
       },
@@ -36,10 +65,9 @@ export default function MainTable() {
         dataIndex: 'name',
         key: 'name',
         // filteredValue: filteredInfo?.name || null,
-        // filteredValue: filteredInfo?.name || null,
-        // onFilter: (value, record) => record.name.includes(value),
+        // onFilter: (value, record) => record.username.toString().toLowerCase().includes(value),
         sorter: (a, b) => a.name.length - b.name.length,
-        // sortOrder: sortedInfo.columnKey === 'name' && sortedInfo.order,
+        sortOrder: sortedInfo.columnKey === 'name' && sortedInfo.order,
         ellipsis: true,
       },
       {
@@ -49,7 +77,7 @@ export default function MainTable() {
         // filteredValue: filteredInfo?.email || null,
         // onFilter: (value, record) => record.email.includes(value),
         sorter: (a, b) => a.email.length - b.email.length,
-        // sortOrder: sortedInfo.columnKey === 'email' && sortedInfo.order,
+        sortOrder: sortedInfo.columnKey === 'email' && sortedInfo.order,
         ellipsis: true,
       },
       {
@@ -59,7 +87,7 @@ export default function MainTable() {
         filteredValue: filteredInfo?.gender || null,
         onFilter: (value, record) => record.gender.toString().toLowerCase().startsWith(value),
         sorter: (a, b) => a.gender.length - b.gender.length,
-        // sortOrder: sortedInfo.columnKey === 'gender' && sortedInfo.order,
+        sortOrder: sortedInfo.columnKey === 'gender' && sortedInfo.order,
         ellipsis: true,
       },
       {
@@ -69,11 +97,11 @@ export default function MainTable() {
         // filteredValue: filteredInfo?.registeredDate || null,
         // onFilter: (value, record) => record.registeredDate.includes(value),
         sorter: (a, b) => dateConverter(a.registeredDate.toString()) - dateConverter(b.registeredDate.toString()),
-        // sortOrder: sortedInfo.columnKey === 'registeredDate' && sortedInfo.order,
+        sortOrder: sortedInfo.columnKey === 'registeredDate' && sortedInfo.order,
         ellipsis: true,
       },
     ],
-    [filteredInfo])
+    [filteredInfo, sortedInfo])
 
   const dataSource = useMemo(
     () => data,
@@ -81,7 +109,7 @@ export default function MainTable() {
 
   return (
     <>
-      <Table columns={columns} dataSource={dataSource} pagination={{ pageSize: 5 }} loading={status !== 'idle'} />
+      <Table columns={columns} dataSource={dataSource} pagination={{ pageSize: pagination.pageSize, current: pagination.currentPage }} loading={status !== 'idle'} onChange={(pagination, filters, sorter, extra) => changeHandler(pagination, sorter, extra)} />
     </>
   )
 }

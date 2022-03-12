@@ -5,10 +5,22 @@ import axios from 'axios';
 const baseURI = process.env.REACT_APP_API_URL|| '';
 
 export interface TableState extends Record<string, unknown> {
-  data: Array<{}>,
-  status: 'idle' | 'loading' | 'failed';
-  filteredInfo?: Record<string,string[] | unknown>,
-  sortedInfo?: Record<string, string>
+  data?: Array<{}>,
+  status?: 'idle' | 'loading' | 'failed',
+  filteredInfo?: Record<string,string[] | null>,
+  sortedInfo?: {
+    order?: false | 'ascend' | 'descend',
+    columnKey?: false | 'username' | 'name' | 'email' | 'gender' | 'registeredDate',
+  },
+  pagination?: {
+    currentPage?: number,
+    pageSize?: number
+}
+}
+
+export interface TableURIParam {
+  page?: number | undefined,
+  result?: number | undefined
 }
 /**
  * Control filters and sorters by filteredValue and sortOrder.
@@ -18,15 +30,19 @@ export interface TableState extends Record<string, unknown> {
  */
 const initialState: TableState = {
   data: [],
+  status: 'idle',
   filteredInfo: {
     username: [''],
     gender: ['']
   },
   sortedInfo: {
-    order: '',
-    columnKey: '',
+    order: false,
+    columnKey: false,
   },
-  status: 'idle'
+  pagination: {
+    currentPage: 1,
+    pageSize: 5
+  }
 };
 
 // The function below is called a thunk and allows us to perform async logic. It
@@ -36,11 +52,11 @@ const initialState: TableState = {
 // typically used to make async requests.
 export const fetchAsync = createAsyncThunk(
   'table/fetchData',
-  async (page: number) => {
+  async (param: TableURIParam) => {
     const response = await axios.get(baseURI, {
       params: {
-        page: page,
-        results: 10
+        page: param.page,
+        results: param.result
       }
     });
     // The value we return becomes the `fulfilled` action payload
@@ -72,19 +88,16 @@ export const tableSlice = createSlice({
     sort: (state, action) => {
       state.sortedInfo = action.payload;
     },
+    paginate: (state, action) => {
+      state.pagination = action.payload
+    },
     // Use the PayloadAction type to declare the contents of `action.payload`
     search: (state, action) => {
       if (action.payload.gender) {
-      state.filteredInfo = {
-        gender: action.payload.gender,
-        username:  state.filteredInfo?.username
+        state.filteredInfo.gender = action.payload.gender
+      } else {
+        state.filteredInfo.username =  action.payload.username
       }
-    } else {
-      state.filteredInfo = {
-        gender: state.filteredInfo?.gender,
-        username:  action.payload.username
-      }
-    }
     },
   },
   // The `extraReducers` field lets the slice handle actions defined elsewhere,
@@ -96,13 +109,12 @@ export const tableSlice = createSlice({
       })
       .addCase(fetchAsync.fulfilled, (state, action) => {
         state.status = 'idle';
-        // @ts-ignore
         state.data = action.payload
       });
   },
 });
 
-export const { reset, sort, search } = tableSlice.actions;
+export const { reset, sort, search, paginate } = tableSlice.actions;
 
 // The function below is called a selector and allows us to select a value from
 // the state. Selectors can also be defined inline where they're used instead of

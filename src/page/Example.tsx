@@ -1,5 +1,5 @@
 import { Typography, Row, Col } from 'antd';
-import Nav from "../components/Nav"
+import Nav from '../components/Nav';
 import TableAction from '../components/TableAction';
 import MainTable from '../components/Table';
 

@@ -1,5 +1,5 @@
-import { Menu } from "antd"
-import { Link } from "react-router-dom"
+import { Menu } from 'antd';
+import { Link } from 'react-router-dom';
 import { Row, Col } from 'antd';
 
 export function Home() {

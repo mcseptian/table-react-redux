@@ -1,6 +1,6 @@
 import { Form, Button } from 'antd';
-import SelectGender from './Select'
-import SearchName from './Search'
+import SelectGender from './Select';
+import SearchUsername from './Search';
 import { useAppDispatch } from '../app/hooks';
 import { reset } from '../features/table/tableSlice';
 
@@ -19,7 +19,7 @@ export default function TableAction() {
     >
       <Form.Item
         label="Search">
-        <SearchName />
+        <SearchUsername />
       </Form.Item>
 
       <Form.Item
